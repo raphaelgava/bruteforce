@@ -13,9 +13,14 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Instalar WinRAR via winget
+#      - name: Instalar WinRAR via winget
+#        run: |
+#          winget install --id=RARLab.WinRAR -e --silent
+      - name: Baixar e instalar WinRAR
         run: |
-          winget install --id=RARLab.WinRAR -e --silent
+          Invoke-WebRequest -Uri "https://www.rarlab.com/rar/winrar-x64-621.exe" -OutFile "winrar.exe"
+          Start-Process ".\winrar.exe" -ArgumentList "/S" -Wait
+
 
       - name: Configurar Python
         uses: actions/setup-python@v6
