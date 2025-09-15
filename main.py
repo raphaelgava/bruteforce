@@ -42,14 +42,14 @@ def criar_log():
         logger.handlers.clear()
 
     # Handler personalizado do tdqm
-    tqdm_handler = TqdmLoggingHandler()
-    tqdm_handler.setFormatter(formatter)
-    logger.addHandler(tqdm_handler)
+    # tqdm_handler = TqdmLoggingHandler()
+    # tqdm_handler.setFormatter(formatter)
+    # logger.addHandler(tqdm_handler)
 
     # Handler para terminal (GitHub Actions mostra isso)
-    # console_handler = logging.StreamHandler()
-    # console_handler.setFormatter(formatter)
-    # logger.addHandler(console_handler)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
 
     # Arquivo
     # file_handler = logging.FileHandler(nome_arquivo, mode="w")
