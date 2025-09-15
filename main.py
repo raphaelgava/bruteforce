@@ -81,10 +81,10 @@ def extrair_arquivo_com_senha(caminho_rar, nome_arquivo_desejado, senha, destino
         salvar_resultado(senha)
         return True
     except rarfile.RarWrongPassword as e:
-        logging.warning(e)
+        # logging.warning(e)
         return False
-    except rarfile.BadRarFile as e:
-        logging.error(f"Arquivo corrompido: {e}")
+    # except rarfile.BadRarFile as e:
+    #     logging.error(f"Arquivo corrompido: {e}")
         return False
     except Exception as e:
         logging.error(str(e) + " \'" + senha + "\' para o arquivo " + caminho_rar)
