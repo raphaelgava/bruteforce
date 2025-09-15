@@ -21,6 +21,14 @@ jobs:
           Invoke-WebRequest -Uri "https://www.rarlab.com/rar/winrar-x64-621.exe" -OutFile "winrar.exe"
           Start-Process ".\winrar.exe" -ArgumentList "/S" -Wait
 
+      - name: Validar instalação do UnRAR
+        run: |
+          if (Test-Path "C:\Program Files\WinRAR\UnRAR.exe") {
+            Write-Host "✅ UnRAR instalado com sucesso"
+          } else {
+            Write-Error "❌ UnRAR não encontrado"
+            exit 1
+          }
 
       - name: Configurar Python
         uses: actions/setup-python@v6
@@ -33,7 +41,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Executar script Python
-        run: python seu_script.py
+        run: python main.py
 
       - name: Upload do resultado como artefato
         uses: actions/upload-artifact@v4
