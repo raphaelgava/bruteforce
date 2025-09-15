@@ -67,9 +67,19 @@ from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import rarfile
 from collections import Counter
+import platform
 
+if platform.system() == "Windows":
+    rarfile.UNRAR_TOOL = r"C:\Program Files\WinRAR\UnRAR.exe"
+    print("Windows")
+else:
+    rarfile.UNRAR_TOOL = "unrar"
+    print("Linux")
 
-rarfile.UNRAR_TOOL = r"C:\Program Files\WinRAR\UnRAR.exe"
+def salvar_resultado(senha_encontrada):
+    with open("senha_encontrada.txt", "w") as f:
+        f.write(f"SENHA ENCONTRADA: {senha_encontrada}\n")
+
 
 def extrair_arquivo_com_senha(caminho_rar, nome_arquivo_desejado, senha, destino='.'):
     try:
@@ -78,6 +88,7 @@ def extrair_arquivo_com_senha(caminho_rar, nome_arquivo_desejado, senha, destino
             return False
         rf.extract(nome_arquivo_desejado, path=destino, pwd=senha)
         print(f"✅ Senha correta: {senha}")
+        salvar_resultado(senha)
         return True
     except rarfile.RarWrongPassword:
         return False
@@ -120,10 +131,12 @@ def testar_combinacoes_por_tamanho(tamanho):
 
         print("Testando: " + palavra)
         sucesso = extrair_arquivo_com_senha(
-            caminho_rar='C:/Users/Raphael/Downloads/blaaa.rar',
+            #caminho_rar='C:/Users/Raphael/Downloads/blaaa.rar',
+            caminho_rar='blaaa.rar',
             nome_arquivo_desejado='blaaa.camproj',
             senha=palavra,
-            destino='C:/Users/Raphael/Downloads/extraido'
+            #destino='C:/Users/Raphael/Downloads/extraido'
+            destino='.'
         )
 
         if sucesso:
