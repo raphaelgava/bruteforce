@@ -1,0 +1,30 @@
+name: Run Python script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Executar script
+        run: python main.py
+
+#      - name: Deploy para Azure
+#        uses: azure/webapps-deploy@v2
+#        with:
+#          app-name: nome-do-seu-app-service
+#          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
