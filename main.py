@@ -13,6 +13,13 @@ from collections import Counter
 import platform
 import logging
 
+#Criando handle para evitar encavalamento dos logs (disputa entre tqdm e loogin)
+class TqdmLoggingHandler(logging.Handler):
+    def emit(self, record):
+        msg = self.format(record)
+        tqdm.write(msg)
+
+
 def criar_log():
     # Cria o logger
     logger = logging.getLogger()
@@ -21,10 +28,13 @@ def criar_log():
     # Formato do log
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
+    # Handler personalizado do tdqm
+    logger.addHandler(TqdmLoggingHandler())
+
     # Handler para terminal (GitHub Actions mostra isso)
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
+    # console_handler = logging.StreamHandler()
+    # console_handler.setFormatter(formatter)
+    # logger.addHandler(console_handler)
 
     # Arquivo
     # file_handler = logging.FileHandler(nome_arquivo, mode="w")
