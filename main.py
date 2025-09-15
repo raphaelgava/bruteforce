@@ -29,7 +29,9 @@ def criar_log():
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
     # Handler personalizado do tdqm
-    logger.addHandler(TqdmLoggingHandler())
+    tqdm_handler = TqdmLoggingHandler()
+    tqdm_handler.setFormatter(formatter)
+    logger.addHandler(tqdm_handler)
 
     # Handler para terminal (GitHub Actions mostra isso)
     # console_handler = logging.StreamHandler()
