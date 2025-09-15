@@ -1,7 +1,9 @@
 name: Executar script no Windows com WinRAR
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   rodar-script:
