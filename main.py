@@ -6,18 +6,27 @@
 # )
 
 import itertools
-from concurrent.futures import ThreadPoolExecutor
-from tqdm import tqdm
 import rarfile
-from collections import Counter
 import platform
 import logging
+import sys
+
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
+from collections import Counter
+
 
 #Criando handle para evitar encavalamento dos logs (disputa entre tqdm e loogin)
 class TqdmLoggingHandler(logging.Handler):
     def emit(self, record):
-        msg = self.format(record)
-        tqdm.write(msg)
+        try:
+            msg = self.format(record)
+            # Usar tqdm.write() para que as mensagens de log não interfiram com a barra de progresso
+            # em ambientes interativos. Em ambientes não interativos, onde o tqdm é desabilitado,
+            # esta chamada ainda funcionará como um print para sys.stderr.
+            tqdm.write(msg, file=sys.stderr)
+        except Exception as e:
+            self.handleError(f"{e} ao tentar printar: {record}")
 
 
 def criar_log():
@@ -27,6 +36,10 @@ def criar_log():
 
     # Formato do log
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+    # Remove handlers antigos (evita duplicação ou conflito)
+    if logger.hasHandlers():
+        logger.handlers.clear()
 
     # Handler personalizado do tdqm
     tqdm_handler = TqdmLoggingHandler()
@@ -53,6 +66,7 @@ def extrair_arquivo_com_senha(caminho_rar, nome_arquivo_desejado, senha, destino
     try:
         rf = rarfile.RarFile(caminho_rar)
         if nome_arquivo_desejado not in rf.namelist():
+            logging.warning(f"Arquivo não encontrado {nome_arquivo_desejado}")
             return False
         rf.extract(nome_arquivo_desejado, path=destino, pwd=senha)
         logging.info(f"✅ Senha correta: {senha}")
@@ -60,7 +74,8 @@ def extrair_arquivo_com_senha(caminho_rar, nome_arquivo_desejado, senha, destino
         return True
     except rarfile.RarWrongPassword:
         return False
-    except:
+    except Exception as e:
+        logging.error(e)
         return False
 
 def tem_tres_iguais_em_sequencia(palavra):
