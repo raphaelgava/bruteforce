@@ -174,36 +174,115 @@ def palavra_invalida(palavra):
 
     return False  # Palavra passou por todos os filtros
 
+def carregar_progresso(tamanho):
+    try:
+        with open("progresso_global.txt", "r") as f:
+            for linha in f:
+                if ':' in linha:
+                    t, p = linha.strip().split(':', 1)
+                    if int(t) == tamanho:
+                        return p
+    except FileNotFoundError:
+        logging.warning("Arquivo não existe")
+    return None
 
 
+from threading import Lock
+progresso_lock = Lock()
+import signal
+
+# def handle_sigint(signum, frame):
+#     logging.warning("Sinal de interrupção recebido. Salvando progresso...")
+#     # salvar_progresso(tamanho_global, palavra_global)
+#     os.replace("progresso_temp.txt", "progresso_global.txt")
+#     exit(0)
+#
+# signal.signal(signal.SIGINT, handle_sigint)
+
+
+def salvar_progresso(tamanho, senha):
+    progresso = {}
+    file = "progresso_global.txt"
+
+    with progresso_lock:
+        try:
+            with open(file, "r") as f:
+                for linha in f:
+                    if ':' in linha:
+                        t, p = linha.strip().split(':', 1)
+                        if t.isdigit():
+                            progresso[int(t)] = p
+                        else:
+                            logging.error("Registro inválido para a senha {}", p)
+        except FileNotFoundError:
+            pass
+
+        progresso[tamanho] = senha
+
+
+        with open(file, "w") as f:
+            try:
+                for t, p in progresso.items():
+                    f.write(f"{t}:{p}\n")
+            finally:
+                f.flush()  # força a gravação no disco
+                os.fsync(f.fileno())  # garante que o sistema operacional também grave
+
+def senha_para_indice(senha, hex_chars):
+    base = len(hex_chars)
+    indice = 0
+    for i, char in enumerate(reversed(senha)):
+        pos = hex_chars.index(char)
+        indice += pos * (base ** i)
+    return indice
+
+#COM HISTÓRICO
+"""
+Suponha:
+- hex_chars = ['a', 'b', 'c']
+- tamanho = 3
+- idx = 5
+
+Conversão:
+- temp = 5
+- 1ª iteração: 5 % 3 = 2 → 'c'; temp = 5 // 3 = 1
+- 2ª iteração: 1 % 3 = 1 → 'b'; temp = 1 // 3 = 0
+- 3ª iteração: 0 % 3 = 0 → 'a'; temp = 0 // 3 = 0
+combinacao = ['c', 'b', 'a'] → palavra = 'abc' (após reversed)
+"""
 def testar_combinacoes_por_tamanho(tamanho, tmpfile):
     hex_chars = (#[chr(0x20), chr(0x5f)] + #espaço e underscore
-                 [j for j in 'raphelgvdnjulisoRAPHELGVDNJULISO@_!'] +
-                 [chr(j) for j in range(0x30, 0x3A)] #números
-                 #[chr(j) for j in range(0x40, 0x5A)] + #letras maiúsculas
-                 #[chr(j) for j in range(0x61, 0x7B)] #letras minúsculas
-                 )
+            [j for j in 'raphelgvdnjulisoRAPHELGVDNJULISO@_!'] +
+            [chr(j) for j in range(0x30, 0x3A)] #números
+        #[chr(j) for j in range(0x40, 0x5A)] + #letras maiúsculas
+        #[chr(j) for j in range(0x61, 0x7B)] #letras minúsculas
+    )
     # logging.info(hex_chars)
     total = len(hex_chars) ** tamanho
     barra = tqdm(total=total, desc=f"Tamanho {tamanho}", position=tamanho-5, leave=True, mininterval=5) #mininterval é para logar de 5s em 5s
 
-    for combinacao in itertools.product(hex_chars, repeat=tamanho):
-        palavra = ''.join(combinacao)
+    senha_inicial = carregar_progresso(tamanho)
+    start_index = senha_para_indice(senha_inicial, hex_chars) if senha_inicial else 0
+    barra.update(start_index)
+
+    for idx in range(start_index, total):
+        combinacao = []
+        temp = idx
+        for _ in range(tamanho):
+            combinacao.append(hex_chars[temp % len(hex_chars)]) # <-- ordem natural, da direita pra esquerda
+
+            temp //= len(hex_chars)
+
+        palavra = ''.join(reversed(combinacao))  # <-- inverte para que o caractere menos significativo fique à direita
         barra.update(1)
 
-        # if tem_tres_iguais_em_sequencia(palavra):
-        #     continue  # pula essa senha
-        #
-        # if tem_quatro_iguais_em_qualquer_posicao(palavra):
-        #     continue  # pula essa senha
-        #
-        # if tem_mais_de_4_numeros(palavra):
-        #     continue # pula essa senha
-        #
-        # if dois_pares_em_qualquer_lugar(palavra):
-        #     continue # pula essa senha
         if palavra_invalida(palavra):
+            if (idx % 10000000 == 0):
+                salvar_progresso(tamanho, palavra)
             continue # pula essa senha
+        else:
+            if (idx % 1001 == 0):
+                salvar_progresso(tamanho, palavra)
 
         logging.info("Testando \'" + palavra + "\' para o arquivo " + tmpfile + " do posicionamento " + str(tamanho))
         sucesso = extrair_arquivo_com_senha(
@@ -221,6 +300,53 @@ def testar_combinacoes_por_tamanho(tamanho, tmpfile):
             return palavra
     barra.close()
     return None
+
+#  SEM HISTÓRICO
+# def testar_combinacoes_por_tamanho(tamanho, tmpfile):
+#     hex_chars = (#[chr(0x20), chr(0x5f)] + #espaço e underscore
+#                  [j for j in 'raphelgvdnjulisoRAPHELGVDNJULISO@_!'] +
+#                  [chr(j) for j in range(0x30, 0x3A)] #números
+#                  #[chr(j) for j in range(0x40, 0x5A)] + #letras maiúsculas
+#                  #[chr(j) for j in range(0x61, 0x7B)] #letras minúsculas
+#                  )
+#     # logging.info(hex_chars)
+#     total = len(hex_chars) ** tamanho
+#     barra = tqdm(total=total, desc=f"Tamanho {tamanho}", position=tamanho-5, leave=True, mininterval=5) #mininterval é para logar de 5s em 5s
+#
+#     for combinacao in itertools.product(hex_chars, repeat=tamanho):
+#         palavra = ''.join(combinacao)
+#         barra.update(1)
+#
+#         # if tem_tres_iguais_em_sequencia(palavra):
+#         #     continue  # pula essa senha
+#         #
+#         # if tem_quatro_iguais_em_qualquer_posicao(palavra):
+#         #     continue  # pula essa senha
+#         #
+#         # if tem_mais_de_4_numeros(palavra):
+#         #     continue # pula essa senha
+#         #
+#         # if dois_pares_em_qualquer_lugar(palavra):
+#         #     continue # pula essa senha
+#         if palavra_invalida(palavra):
+#             continue # pula essa senha
+#
+#         logging.info("Testando \'" + palavra + "\' para o arquivo " + tmpfile + " do posicionamento " + str(tamanho))
+#         sucesso = extrair_arquivo_com_senha(
+#             #caminho_rar='C:/Users/Raphael/Downloads/blaaa.rar',
+#             caminho_rar=tmpfile,
+#             nome_arquivo_desejado='blaaa.camproj',
+#             senha=palavra,
+#             #destino='C:/Users/Raphael/Downloads/extraido'
+#             destino=str(tamanho)
+#         )
+#
+#         if sucesso:
+#             barra.close()
+#             logging.info(f"🔓 Senha encontrada: {palavra}")
+#             return palavra
+#     barra.close()
+#     return None
 
 def gerar_combinacoes_em_threads(min_len, max_len):
     caminhos_por_tamanho = {}

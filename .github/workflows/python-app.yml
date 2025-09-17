@@ -50,6 +50,7 @@ jobs:
           path: |
             senha_encontrada.txt
             blaaa.camproj
+            progresso_global.txt
 
 #name: Run Python script
 #
