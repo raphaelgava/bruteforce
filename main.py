@@ -257,6 +257,7 @@ def testar_combinacoes_por_tamanho(tamanho, tmpfile):
         #[chr(j) for j in range(0x40, 0x5A)] + #letras maiúsculas
         #[chr(j) for j in range(0x61, 0x7B)] #letras minúsculas
     )
+    logging.info(hex_chars)
     # logging.info(hex_chars)
     total = len(hex_chars) ** tamanho
     barra = tqdm(total=total, desc=f"Tamanho {tamanho}", position=tamanho-5, leave=True, mininterval=5) #mininterval é para logar de 5s em 5s
@@ -281,7 +282,7 @@ def testar_combinacoes_por_tamanho(tamanho, tmpfile):
                 salvar_progresso(tamanho, palavra)
             continue # pula essa senha
         else:
-            if (idx % 1001 == 0):
+            if (idx % 501 == 0):
                 salvar_progresso(tamanho, palavra)
 
         logging.info("Testando \'" + palavra + "\' para o arquivo " + tmpfile + " do posicionamento " + str(tamanho))
